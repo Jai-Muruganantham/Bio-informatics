@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Visualisation task / Job Interview">
+    <meta name="author" content="KAROLOS TALVIS">
+
+    <title>VISUALISATION TASK</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/scrolling-nav.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+
+</head>
+
+<!-- The #page-top ID is part of the scrolling feature - the data-spy and data-target are part of the built-in Bootstrap scrollspy function -->
+
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+    <section id="about" class="about-section">
+      <div class="container">
+                <div class="imagine">
+                  <img src="img/logo.jpg" class="img-responsive" alt="logo">
+                </div>
+                <div class="col-lg-12">
+                    <h1>VISUALISATION EXAMPLE 1</h1>
+                </div>
+                <div class="col-lg-12">
+                    <h2><span>Chart:</span> Food Items in relation to Gdp and Perurb <span>(1970-2011)</span>, Greece</h2>
+                </div>        
+                <!-- Chart 1 -->         
+                <div id="chartContainer">
+                    <!--<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
+                    <script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script> -->
+                    <script type="text/javascript">
+                      var svg = dimple.newSvg("#chartContainer", 800, 600);
+                        d3.tsv("FAO_data_raw.tsv", function (data) {
+
+                            // Reduce the number of items as this chart can get a bit busy
+                            data = dimple.filterData(data, "Item", [
+                              "Vegetable Oils + (Total)",
+                              "Sugar & Sweeteners + (Total)",
+                              "Cereals - Excluding Beer + (Total)",
+                              "Fish, Seafood + (Total)"]);
+
+                            var series,
+                              // Set a background and foreground chart
+                              charts = [
+                                new dimple.chart(svg, null),
+                                new dimple.chart(svg, data)
+                              ],
+                              lastDate = null,
+                              items = dimple.getUniqueValues(data, "Item");
+
+                              // Define 2 nearly identical charts.  It's essential
+                              // for this that the max and minimum values are fixed
+                              // and unmoving otherwise the background chart will get
+                              // out of sync with the foreground the background chart's
+                              // axes are hidden and it's colors are faded.  Both have
+                              // their borders set to white, which looks better on this chart
+                              charts.forEach(function (chart, i) {
+                                var x, y, z;
+                                chart.setBounds(100, 70, 605, 405);
+                                x = chart.addMeasureAxis("x", "Perurb");
+                                x.overrideMax = 1;
+                                x.hidden = (i === 0);
+                                y = chart.addMeasureAxis("y", "Value");
+                                y.overrideMax = 1400;
+                                y.overrideMin = -200;
+                                y.hidden = (i === 0);
+                                z = chart.addMeasureAxis("z", "Gdp");
+                                z.overrideMax = 30000;
+                                // Ensure the same colors for every owner in both charts
+                                // differing by opacity
+                                items.forEach(function (Item, k) {
+                                  chart.assignColor(
+                                    Item,
+                                    charts[0].defaultColors[k].fill,
+                                    "white",
+                                    (i === 0 ? 0.3 : 1));
+                                  }, this);
+                                }, this);
+
+                                // Define a storyboard on the main chart, this will iterate
+                                // all dates and redraw for each, the callback will build the
+                                // the background chart
+                                charts[1].setStoryboard("Year", function (d) {
+                                  // Use the last date variable to manage the previous tick's data
+                                  if (lastDate !== null) {
+                                    // Pull the previous data
+                                    var lastData = dimple.filterData(data, "Year", lastDate);
+                                    // Add a series to the background chart to display old position
+                                    var lastSeries = charts[0].addSeries("Item", dimple.plot.bubble);
+                                    // Average suits these measures better
+                                    lastSeries.aggregate = dimple.aggregateMethod.avg;
+                                    // Give each series its own data at different periods
+                                    lastSeries.data = lastData;
+                                    // Draw the background chart
+                                    charts[0].draw();
+                                    // Class all shapes as .historic
+                                    lastSeries.shapes.attr("class", "historic");
+                                      // Reduce all opacity and remove once opacity drops below 5%
+                                      d3.selectAll(".historic")
+                                        .each(function () {
+                                          var shape = d3.select(this),
+                                            opacity = shape.style("opacity") - 0.02;
+                                          if (opacity < 0.05) {
+                                            shape.remove();
+                                          } else {
+                                            shape.style("opacity", opacity);
+                                          }
+                                        });
+                                      }
+                                      lastDate = d;
+                                  });
+
+                                  // Add the primary series to the main chart
+                                  series = charts[1].addSeries("Item", dimple.plot.bubble)
+                                  series.aggregate = dimple.aggregateMethod.avg;
+                                  // Add legends
+                                  charts[1].addLegend(90, 540, 500, 20, "right");  
+                                  // Draw the main chart
+                                  charts[1].draw();
+
+                                  // Add stroke
+                                  d3.selectAll("circle").style("stroke-width", 2);
+                 
+                        });
+                    </script>
+                </div>              
+                <div class="col-lg-12">
+                    <h1>VISUALISATION EXAMPLE 2</h1>
+                </div>
+                <div class="col-lg-12">
+                    <h2><span>Chart:</span> </h2>
+                </div>                
+                <!-- Chart 2 --> 
+                <div id="chartContainer2">
+                    <script type="text/javascript">
+                      var svg2 = dimple.newSvg("#chartContainer2", 1000, 1000);
+                      d3.tsv("coverage_df.tsv", function (data) {
+
+                        data = dimple.filterData(data, "track_id", "macrophage_naive");
+
+                        var myChart = new dimple.chart(svg2, data);
+                        myChart.setBounds(100, 70, 605, 405);
+                        var x = myChart.addCategoryAxis("x", "coverage");
+                        x.addOrderRule("track_id");
+                        myChart.addMeasureAxis("y", "colour_group");
+                        myChart.addSeries("Item", dimple.plot.line);
+                        //myChart.addLegend(60, 10, 500, 20, "right");
+                        myChart.draw();
+                      });
+                    </script>
+                </div>    
+        </div>
+    </section>
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- Scrolling Nav JavaScript -->
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/scrolling-nav.js"></script>
+
+</body>
+
+</html>
